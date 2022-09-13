@@ -19,6 +19,8 @@ using System.Windows.Controls.Primitives;
 using System.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
+using System.Collections.ObjectModel;
 
 namespace ShbChecker
 {
@@ -28,7 +30,7 @@ namespace ShbChecker
 	public partial class MainWindow : Window
 	{
 		private string hashOfBryptDllFile = "TiTRUN/fHfMHB7ueZUdTxlM8CzUFr2d+XBIv3PtdzQ6dHqSvxnUP1bjzuZOP1WHkGfuoHWj0Yj7YXAsOGCDHPA==";
-		public ArrayList records = new ArrayList();
+		public ObservableCollection<Record> records = new ObservableCollection<Record>();
 
 		public MainWindow()
 		{
@@ -200,7 +202,7 @@ namespace ShbChecker
 				}
 			}
 
-			dgSimple.ItemsSource = records;
+			//dgSimple.ItemsSource = records;
 		}
 
 		private void triggerTool(string excelPath, string crawlUsername, string crawlPassword)
@@ -332,14 +334,84 @@ namespace ShbChecker
 		public string mac { get; set; }
 	}
 
-	public class Record
+	public class Record : ObservableObject
 	{
-		public int Id { get; set; }
-		public string hoTen { get; set; }
-		public string cmnd { get; set; }
+		public int id;
+		public string hoTen;
+		public string cmnd;
 		public List<string> miscList = new List<string>();
-		public string result1 { get; set; }
-		public string result2 { get; set; }
+		public string result1;
+		public string result2;
+
+		public int Id
+		{
+			get { return id; }
+			set
+			{
+				id = value;
+				OnPropertyChanged("Id");
+			}
+		}
+
+		public string HoTen
+		{
+			get { return hoTen; }
+			set
+			{
+				hoTen = value;
+				OnPropertyChanged("HoTen");
+			}
+		}
+
+		public string Cmnd
+		{
+			get { return cmnd; }
+			set
+			{
+				cmnd = value;
+				OnPropertyChanged("Cmnd");
+			}
+		}
+
+		public string Result1
+		{
+			get { return result1; }
+			set
+			{
+				result1 = value;
+				OnPropertyChanged("Result1");
+			}
+		}
+
+		public string Result2
+		{
+			get { return result2; }
+			set
+			{
+				result2 = value;
+				OnPropertyChanged("Result2");
+			}
+		}
+	}
+
+	//public class MainViewModel : ObservableObject
+	//{
+	//	public ObservableCollection<Record> Table { get; set; }
+
+	//	public MainViewModel()
+	//	{
+	//		Table = new ObservableCollection<Record>();
+	//	}
+	//}
+
+	public class ObservableObject : INotifyPropertyChanged
+	{
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		protected void OnPropertyChanged(string name)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
 	}
 
 	public class User32API

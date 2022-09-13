@@ -73,8 +73,28 @@
                 </TextBox.Style>
             </TextBox>
 
-            <DataGrid Name="dgSimple" HorizontalAlignment="Center" Margin="0,120,0,100" Width="1200"/>
+            <!--<DataGrid Name="dgSimple" HorizontalAlignment="Center" Margin="0,120,0,100" Width="1200"/>-->
 
+
+            <DataGrid DataContext="{Binding records, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Grid.Column="0" CanUserAddRows="false" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="500" Margin="0,120,0,100">
+
+                <!-- Column Header Text & Bindings -->
+                <DataGrid.Columns>
+
+                    <DataGridTemplateColumn >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox x:Name="checkBox" IsThreeState="False" IsChecked="{Binding IsChecked}" CommandParameter="{Binding Index}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header=" Id" Binding="{Binding Id}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" HoTen" Binding="{Binding HoTen}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Cmnd" Binding="{Binding Cmnd}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Result1" Binding="{Binding Result1}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Result2" Binding="{Binding Result2}" MinWidth="70"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
 
     </Grid>
