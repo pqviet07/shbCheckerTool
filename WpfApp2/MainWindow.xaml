@@ -1,0 +1,81 @@
+﻿<Window x:Class="ShbChecker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="400" Width="800">
+    <Grid Width="{Binding ActualWidth, 
+        RelativeSource = {RelativeSource AncestorType = {x:Type Window}}}" 
+        Height="{Binding ActualHeight, 
+        RelativeSource ={RelativeSource AncestorType = {x:Type Window}}}">
+        <Grid Name="loginUI" Visibility="Visible" Margin="20,40,40,100" Background="Lavender" MinHeight="300" MinWidth="700" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="252*" />
+                <!--   <RowDefinition Height="12*" />-->
+            </Grid.RowDefinitions>
+            <TextBlock Height="23" HorizontalAlignment="Left" Margin="200,120,0,0" Name="textBlockUsername" Text="Username" VerticalAlignment="Top" Width="60" RenderTransformOrigin="1.008,0.587" />
+            <TextBlock Height="23" HorizontalAlignment="Left" Margin="200,150,0,0" Name="textBlockPassword" Text="Password:" VerticalAlignment="Top" Width="59" RenderTransformOrigin="0.895,0.391"  />
+            <TextBox Height="23" HorizontalAlignment="Right" Margin="0,120,200,0" Name="textBoxUsername" VerticalAlignment="Top" Width="222" >
+                <TextBox.Style>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Style.Triggers>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter Property="Background" Value="Yellow" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+            <PasswordBox Height="23" HorizontalAlignment="Right" Margin="0,150,200,0" Name="textBoxPassword" VerticalAlignment="Top" Width="222" >
+                <PasswordBox.Style>
+                    <Style TargetType="{x:Type PasswordBox}">
+                        <Style.Triggers>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter Property="Background" Value="Yellow" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </PasswordBox.Style>
+            </PasswordBox>
+            <!--For password-->
+            <Button Content="Login" Background="SkyBlue" Height="24" HorizontalAlignment="Center" Margin="0,190,0,0" Name="Submit" VerticalAlignment="Top" Width="70" Click="Login_Click" RenderTransformOrigin="2.607,2.217" />
+        </Grid>
+
+        <Grid Name="cicUI" Visibility="Hidden" Background="White">
+
+            <Button Height="24" HorizontalAlignment="Left" Margin="400,20,0,0" Content="Start" Background="SkyBlue"  Name="button2" VerticalAlignment="Top" Width="70" Click="Start_Click" />
+            <Button Height="24" HorizontalAlignment="Left" Margin="300,20,0,0" Content="Import Excel" Background="SkyBlue" Name="button3" VerticalAlignment="Top" Width="70" Click="ImportExcel_Click" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,50,0,0" Text="Selected file:" VerticalAlignment="Top" Width="90" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="500,50,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="excelPath"/>
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,70,0,0" Text="Crawl Username:" VerticalAlignment="Top" Width="90" />
+            <TextBox Height="18" HorizontalAlignment="Left" Margin="500,70,0,0" Text=""  VerticalAlignment="Top" Width="650" TextWrapping="Wrap" Name="crawlUsername" >
+                <TextBox.Style>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Style.Triggers>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter Property="Background" Value="Yellow" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,90,0,0" Text="Crawl Password:" VerticalAlignment="Top" Width="90" />
+            <TextBox Height="18" HorizontalAlignment="left" Margin="500,90,0,0" Text="" VerticalAlignment="Top" Width="650" TextWrapping="Wrap" Name="crawlPassword" >
+                <TextBox.Style>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Style.Triggers>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter Property="Background" Value="Yellow" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+
+            <DataGrid Name="dgSimple" HorizontalAlignment="Center" Margin="0,120,0,100" Width="1200"/>
+
+        </Grid>
+
+    </Grid>
+</Window>
