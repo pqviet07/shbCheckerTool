@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 
 namespace ShbChecker
 {
@@ -30,7 +31,10 @@ namespace ShbChecker
 	public partial class MainWindow : Window
 	{
 		private string hashOfBryptDllFile = "TiTRUN/fHfMHB7ueZUdTxlM8CzUFr2d+XBIv3PtdzQ6dHqSvxnUP1bjzuZOP1WHkGfuoHWj0Yj7YXAsOGCDHPA==";
-		public ObservableCollection<Record> records = new ObservableCollection<Record>();
+		public ArrayList records = new ArrayList();
+		private string excelPathStr;
+		private string crawlUsernameStr;
+		private string crawlPasswordStr;
 
 		public MainWindow()
 		{
@@ -60,6 +64,11 @@ namespace ShbChecker
 			if (sel == true)
 			{
 				excelPath.Text = ofd.FileName;
+				if (new FileInfo(excelPath.Text).Length > 40000)
+				{
+					MessageBox.Show("File quá lớn, vui lòng chọn file có kích thước nhỏ hơn hơn 50KB", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+					return;
+				}
 				loadDataOfExcelFile(excelPath.Text);
 			}
 		}
@@ -68,18 +77,17 @@ namespace ShbChecker
 		{
 			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.Text == "")
 			{
-				MessageBox.Show("Please input information!!");
+				MessageBox.Show("Please input information!!","Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				return;
 			}
 
-			//Thread thread = new Thread(new ThreadStart(() =>{
-			//	triggerTool(excelPath.Text, crawlUsername.Text, crawlPassword.Text);
-			//}));
-			//thread.Start();
+			excelPathStr = excelPath.Text;
+			crawlUsernameStr = crawlUsername.Text;
+			crawlPasswordStr = crawlPassword.Text;
 
 			try
 			{
-				triggerTool(excelPath.Text, crawlUsername.Text, crawlPassword.Text);
+				new Thread(triggerTool).Start();
 			}
 			catch (Exception er)
 			{
@@ -130,8 +138,8 @@ namespace ShbChecker
 
 		private void setFullScreen()
 		{
-			this.Left = 0;
-			this.Top = 0;
+			this.Left = 0f;
+			this.Top = 0f;
 			MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
 			MinHeight = SystemParameters.MaximizedPrimaryScreenHeight;
 			MaxWidth = SystemParameters.MaximizedPrimaryScreenWidth;
@@ -202,34 +210,34 @@ namespace ShbChecker
 				}
 			}
 
-			//dgSimple.ItemsSource = records;
+			dgrid.ItemsSource = records;
 		}
 
-		private void triggerTool(string excelPath, string crawlUsername, string crawlPassword)
+		private void triggerTool()
 		{
 			try
 			{
 				Console.OutputEncoding = System.Text.Encoding.Unicode;
 				//create the reference for the browser  
 				ChromeOptions options = new ChromeOptions();
-				options.AddArgument("--headless");
+				//options.AddArgument("--headless");
 				IWebDriver driver = new ChromeDriver(options);
 				driver.Navigate().GoToUrl("https://lossupport.shbfinance.com.vn/home");
 				var eles = driver.FindElements(By.ClassName("form-control"));
 
 				Thread.Sleep(1000);
-				eles[0].SendKeys(crawlUsername);
-				eles[1].SendKeys(crawlPassword);
+				eles[0].SendKeys(crawlUsernameStr);
+				eles[1].SendKeys(crawlPasswordStr);
 				IWebElement ele2 = driver.FindElement(By.ClassName("btn-lg"));
 				ele2.Click();
 				WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/ul[1]/li[1]/a[1]/span[1]"))).Click();
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[2]/ul[1]/li[4]/a[1]/span[1]"))).Click();
-				Thread.Sleep(2000);
+				Thread.Sleep(3000);
 				//Console.Clear();
 				string[] results = new string[10000];
 				int i = 0;
-				using (var stream = File.Open(excelPath, FileMode.Open, FileAccess.Read))
+				using (var stream = File.Open(excelPathStr, FileMode.Open, FileAccess.Read))
 				{
 					using (var reader = ExcelReaderFactory.CreateReader(stream))
 					{
@@ -248,7 +256,7 @@ namespace ShbChecker
 									IWebElement fullnameEle = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/div[1]/input[1]"));
 									fullnameEle.SendKeys(name);
 									cmndEle.SendKeys(cmnd);
-									Thread.Sleep(100);
+									Thread.Sleep(1000);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[1]")).Click(); // click tim kiem    
 									IWebElement loading = wait.Until(e => e.FindElement(By.ClassName("z-loading-indicator"))); // click tim kiem    
 									if (loading.Displayed == true)
@@ -298,19 +306,23 @@ namespace ShbChecker
 										}
 									}
 
+									this.Dispatcher.Invoke(() => {
+										((Record)records[i - 1]).Result1 = res;
+									});
+
 									//Console.WriteLine("DONE " + i);
 									fullnameEle.Clear();
 									cmndEle.Clear();
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
 
-									Thread.Sleep(1000);
+									Thread.Sleep(4000);
 
 								}
 								catch (Exception e1)
 								{
-									Console.WriteLine(e1);
+									// Console.WriteLine(e1);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
-									Thread.Sleep(2000);
+									Thread.Sleep(4000);
 									if (File.Exists("temp123.txt"))
 										File.Delete("temp123.txt");
 									File.WriteAllLines("temp123.txt", results, Encoding.UTF8);
@@ -319,9 +331,12 @@ namespace ShbChecker
 						} while (reader.NextResult());
 					}
 				}
-				File.WriteAllLines("results.txt", results, Encoding.UTF8);
+				File.WriteAllLines("KETQUA.CSV", results, Encoding.UTF8);
 				driver.Close();
-				Console.Write("test case ended ");
+				MessageBox.Show("ĐÃ HOÀN THÀNH!\nKẾT QUẢ ĐƯỢC LƯU TRONG FILE KETQUA.CSV", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+
+				var chromeDriverProcesses = Process.GetProcesses(). Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
+				foreach (var process in chromeDriverProcesses) process.Kill();
 			}
 			catch (Exception wtf) { }
 		}

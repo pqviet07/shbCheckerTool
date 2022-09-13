@@ -4,51 +4,54 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" Height="400" Width="800">
+        Title="ShbChecker-Version1.0.0     email:fungviet@gmail.com" Height="400" Width="600">
     <Grid Width="{Binding ActualWidth, 
         RelativeSource = {RelativeSource AncestorType = {x:Type Window}}}" 
         Height="{Binding ActualHeight, 
         RelativeSource ={RelativeSource AncestorType = {x:Type Window}}}">
-        <Grid Name="loginUI" Visibility="Visible" Margin="20,40,40,100" Background="Lavender" MinHeight="300" MinWidth="700" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Name="loginUI" Margin="0,0,10,0" MinHeight="300" MinWidth="700" HorizontalAlignment="Center" VerticalAlignment="Center" Height="369" Width="782">
+            <Grid.Background>
+                <ImageBrush ImageSource="imageedit_1_3248397475.png" Stretch="UniformToFill"/>
+            </Grid.Background>
             <Grid.RowDefinitions>
                 <RowDefinition Height="252*" />
                 <!--   <RowDefinition Height="12*" />-->
             </Grid.RowDefinitions>
-            <TextBlock Height="23" HorizontalAlignment="Left" Margin="200,120,0,0" Name="textBlockUsername" Text="Username" VerticalAlignment="Top" Width="60" RenderTransformOrigin="1.008,0.587" />
-            <TextBlock Height="23" HorizontalAlignment="Left" Margin="200,150,0,0" Name="textBlockPassword" Text="Password:" VerticalAlignment="Top" Width="59" RenderTransformOrigin="0.895,0.391"  />
-            <TextBox Height="23" HorizontalAlignment="Right" Margin="0,120,200,0" Name="textBoxUsername" VerticalAlignment="Top" Width="222" >
+            <TextBlock Height="25" Foreground="DarkBlue" FontWeight="Medium" HorizontalAlignment="Left" Margin="220,171,0,0" Name="textBlockUsername" Text="Username:" VerticalAlignment="Top" Width="60" RenderTransformOrigin="1.008,0.587" />
+            <TextBlock Height="25" Foreground="DarkBlue"  FontWeight="Medium" HorizontalAlignment="Left" Margin="220,202,0,0" Name="textBlockPassword" Text="Password:" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.895,0.391"  />
+            <TextBox Height="25" VerticalContentAlignment="Center" HorizontalAlignment="Right" Margin="0,170,260,0" Name="textBoxUsername" VerticalAlignment="Top" Width="222" >
                 <TextBox.Style>
                     <Style TargetType="{x:Type TextBox}">
                         <Style.Triggers>
                             <Trigger Property="IsFocused" Value="true">
-                                <Setter Property="Background" Value="Yellow" />
+                                <Setter Property="Background" Value="LightGray" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
                 </TextBox.Style>
             </TextBox>
-            <PasswordBox Height="23" HorizontalAlignment="Right" Margin="0,150,200,0" Name="textBoxPassword" VerticalAlignment="Top" Width="222" >
+            <PasswordBox Height="25"  VerticalContentAlignment="Center" HorizontalAlignment="Right" Margin="0,200,260,0" Name="textBoxPassword" VerticalAlignment="Top" Width="222" >
                 <PasswordBox.Style>
                     <Style TargetType="{x:Type PasswordBox}">
                         <Style.Triggers>
                             <Trigger Property="IsFocused" Value="true">
-                                <Setter Property="Background" Value="Yellow" />
+                                <Setter Property="Background" Value="LightGray" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
                 </PasswordBox.Style>
             </PasswordBox>
             <!--For password-->
-            <Button Content="Login" Background="SkyBlue" Height="24" HorizontalAlignment="Center" Margin="0,190,0,0" Name="Submit" VerticalAlignment="Top" Width="70" Click="Login_Click" RenderTransformOrigin="2.607,2.217" />
+            <Button Content="Login" Background="RoyalBlue"  Foreground="White"  FontWeight="DemiBold" Height="27" HorizontalAlignment="Right" Margin="0,239,260,0" Name="Submit" VerticalAlignment="Top" Width="70" Click="Login_Click" RenderTransformOrigin="2.607,2.217" />
         </Grid>
 
         <Grid Name="cicUI" Visibility="Hidden" Background="White">
 
-            <Button Height="24" HorizontalAlignment="Left" Margin="400,20,0,0" Content="Start" Background="SkyBlue"  Name="button2" VerticalAlignment="Top" Width="70" Click="Start_Click" />
-            <Button Height="24" HorizontalAlignment="Left" Margin="300,20,0,0" Content="Import Excel" Background="SkyBlue" Name="button3" VerticalAlignment="Top" Width="70" Click="ImportExcel_Click" />
+            <Button Height="28" HorizontalAlignment="Left" Margin="400,20,0,0" Content="Start" Background="Green"  Foreground="White" Name="button2" VerticalAlignment="Top" Width="70" Click="Start_Click" />
+            <Button Height="28" HorizontalAlignment="Left" Margin="300,20,0,0" Content="Import Excel" Background="Green"  Foreground="White"  Name="button3" VerticalAlignment="Top" Width="80" Click="ImportExcel_Click" />
             <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,50,0,0" Text="Selected file:" VerticalAlignment="Top" Width="90" />
             <TextBlock Height="18" HorizontalAlignment="Left" Margin="500,50,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="excelPath"/>
-            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,70,0,0" Text="Crawl Username:" VerticalAlignment="Top" Width="90" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,70,0,0" Text="SHB_Username:" VerticalAlignment="Top" Width="90" />
             <TextBox Height="18" HorizontalAlignment="Left" Margin="500,70,0,0" Text=""  VerticalAlignment="Top" Width="650" TextWrapping="Wrap" Name="crawlUsername" >
                 <TextBox.Style>
                     <Style TargetType="{x:Type TextBox}">
@@ -60,7 +63,7 @@
                     </Style>
                 </TextBox.Style>
             </TextBox>
-            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,90,0,0" Text="Crawl Password:" VerticalAlignment="Top" Width="90" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,90,0,0" Text="SHB_Password:" VerticalAlignment="Top" Width="90" />
             <TextBox Height="18" HorizontalAlignment="left" Margin="500,90,0,0" Text="" VerticalAlignment="Top" Width="650" TextWrapping="Wrap" Name="crawlPassword" >
                 <TextBox.Style>
                     <Style TargetType="{x:Type TextBox}">
@@ -76,23 +79,15 @@
             <!--<DataGrid Name="dgSimple" HorizontalAlignment="Center" Margin="0,120,0,100" Width="1200"/>-->
 
 
-            <DataGrid DataContext="{Binding records, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Grid.Column="0" CanUserAddRows="false" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="500" Margin="0,120,0,100">
+            <DataGrid Name="dgrid" DataContext="{Binding records, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" Grid.Column="0" CanUserAddRows="false" AutoGenerateColumns="False" MinHeight="500" Margin="0,120,0,100"  Width="1200">
 
                 <!-- Column Header Text & Bindings -->
                 <DataGrid.Columns>
-
-                    <DataGridTemplateColumn >
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <CheckBox x:Name="checkBox" IsThreeState="False" IsChecked="{Binding IsChecked}" CommandParameter="{Binding Index}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header=" Id" Binding="{Binding Id}" MinWidth="70"/>
-                    <DataGridTextColumn Header=" HoTen" Binding="{Binding HoTen}" MinWidth="70"/>
-                    <DataGridTextColumn Header=" Cmnd" Binding="{Binding Cmnd}" MinWidth="70"/>
-                    <DataGridTextColumn Header=" Result1" Binding="{Binding Result1}" MinWidth="70"/>
-                    <DataGridTextColumn Header=" Result2" Binding="{Binding Result2}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Id " Binding="{Binding Id}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Họ tên " Binding="{Binding HoTen}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Cmnd/cccd " Binding="{Binding Cmnd}" MinWidth="70"/>
+                    <DataGridTextColumn Header=" Kết quả " Binding="{Binding Result1}" MinWidth="70"/>
+                    <!--<DataGridTextColumn Header=" Result2" Binding="{Binding Result2}" MinWidth="70"/>-->
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
