@@ -77,7 +77,7 @@ namespace ShbChecker
 		{
 			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.Text == "")
 			{
-				MessageBox.Show("Please input information!!","Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+				MessageBox.Show("Please input information!!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				return;
 			}
 
@@ -179,7 +179,7 @@ namespace ShbChecker
 						{
 							try
 							{
-								if (reader.GetValue(0) == null) break;
+								if (reader.GetValue(0) == null) continue;
 								int cntColumn = reader.FieldCount;
 								maxColumn = Math.Max(maxColumn, cntColumn);
 								var newRecord = new Record();
@@ -248,8 +248,8 @@ namespace ShbChecker
 								if (i == 0) { i++; continue; }
 								try
 								{
-									string name = reader.GetString(0);
-									string cmnd = reader.GetValue(1).ToString();
+									string name = Convert.ToString(reader.GetValue(0));
+									string cmnd = Convert.ToString(reader.GetValue(1));
 									string res = "White";
 
 									IWebElement cmndEle = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/input[1]"));
@@ -335,7 +335,7 @@ namespace ShbChecker
 				driver.Close();
 				MessageBox.Show("ĐÃ HOÀN THÀNH!\nKẾT QUẢ ĐƯỢC LƯU TRONG FILE KETQUA.CSV", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 
-				var chromeDriverProcesses = Process.GetProcesses(). Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
+				var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
 				foreach (var process in chromeDriverProcesses) process.Kill();
 			}
 			catch (Exception wtf) { }
