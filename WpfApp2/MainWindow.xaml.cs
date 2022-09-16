@@ -22,6 +22,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Windows.Threading;
+using System.IO.Compression;
 
 namespace ShbChecker
 {
