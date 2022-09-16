@@ -64,17 +64,17 @@
                 </TextBox.Style>
             </TextBox>
             <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,90,0,0" Text="SHB_Password:" VerticalAlignment="Top" Width="90" />
-            <TextBox Height="18" HorizontalAlignment="left" Margin="500,90,0,0" Text="" VerticalAlignment="Top" Width="650" TextWrapping="Wrap" Name="crawlPassword" >
-                <TextBox.Style>
-                    <Style TargetType="{x:Type TextBox}">
+            <PasswordBox Height="18" HorizontalAlignment="left" Margin="500,90,0,0" VerticalAlignment="Top" Width="650" Name="crawlPassword" >
+                <PasswordBox.Style>
+                    <Style TargetType="{x:Type PasswordBox}">
                         <Style.Triggers>
                             <Trigger Property="IsFocused" Value="true">
                                 <Setter Property="Background" Value="Yellow" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
-                </TextBox.Style>
-            </TextBox>
+                </PasswordBox.Style>
+            </PasswordBox>
 
             <!--<DataGrid Name="dgSimple" HorizontalAlignment="Center" Margin="0,120,0,100" Width="1200"/>-->
 

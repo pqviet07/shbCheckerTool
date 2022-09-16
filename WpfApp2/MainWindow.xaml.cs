@@ -35,6 +35,7 @@ namespace ShbChecker
 		private string excelPathStr;
 		private string crawlUsernameStr;
 		private string crawlPasswordStr;
+		public IWebDriver driver;
 
 		public MainWindow()
 		{
@@ -75,7 +76,7 @@ namespace ShbChecker
 
 		private void Start_Click(object sender, RoutedEventArgs e)
 		{
-			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.Text == "")
+			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.SecurePassword.Length==0)
 			{
 				MessageBox.Show("Please input information!!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				return;
@@ -83,11 +84,11 @@ namespace ShbChecker
 
 			excelPathStr = excelPath.Text;
 			crawlUsernameStr = crawlUsername.Text;
-			crawlPasswordStr = crawlPassword.Text;
+			crawlPasswordStr = crawlPassword.Password;
 
 			try
 			{
-				new Thread(triggerTool).Start();
+				new Thread(excuteCrawl).Start();
 			}
 			catch (Exception er)
 			{
@@ -167,53 +168,58 @@ namespace ShbChecker
 
 		private void loadDataOfExcelFile(string excelPath)
 		{
-			int maxColumn = 0;
-			using (var stream = File.Open(excelPath, FileMode.Open, FileAccess.Read))
+			try
 			{
-				// https://stackoverflow.com/questions/50858209/system-notsupportedexception-no-data-is-available-for-encoding-1252
-				using (var reader = ExcelReaderFactory.CreateReader(stream))
+				int maxColumn = 0;
+				using (var stream = File.Open(excelPath, FileMode.Open, FileAccess.Read))
 				{
-					do
+					// https://stackoverflow.com/questions/50858209/system-notsupportedexception-no-data-is-available-for-encoding-1252
+					using (var reader = ExcelReaderFactory.CreateReader(stream))
 					{
-						while (reader.Read())
+						do
 						{
-							try
+							while (reader.Read())
 							{
-								if (reader.GetValue(0) == null) continue;
-								int cntColumn = reader.FieldCount;
-								maxColumn = Math.Max(maxColumn, cntColumn);
-								var newRecord = new Record();
-
-								int id = reader.Depth;
-								newRecord.Id = id;
-
-								string hoTen = Convert.ToString(reader.GetValue(0));
-								newRecord.hoTen = hoTen;
-
-								string cmnd = Convert.ToString(reader.GetValue(1));
-								newRecord.cmnd = cmnd;
-
-								for (int i = 2; i < maxColumn; i++)
+								try
 								{
-									string tmp = Convert.ToString(reader.GetValue(i));
-									newRecord.miscList.Add(tmp);
+									if (reader.GetValue(0) == null) continue;
+									int cntColumn = reader.FieldCount;
+									maxColumn = Math.Max(maxColumn, cntColumn);
+									var newRecord = new Record();
+
+									int id = reader.Depth;
+									newRecord.Id = id;
+
+									string hoTen = Convert.ToString(reader.GetValue(0));
+									newRecord.hoTen = hoTen;
+
+									string cmnd = Convert.ToString(reader.GetValue(1));
+									newRecord.cmnd = cmnd;
+
+									for (int i = 2; i < maxColumn; i++)
+									{
+										string tmp = Convert.ToString(reader.GetValue(i));
+										newRecord.miscList.Add(tmp);
+									}
+
+									records.Add(newRecord);
 								}
-
-								records.Add(newRecord);
+								catch (Exception e1)
+								{
+									Console.WriteLine(e1);
+								}
 							}
-							catch (Exception e1)
-							{
-								Console.WriteLine(e1);
-							}
-						}
-					} while (reader.NextResult());
+						} while (reader.NextResult());
+					}
 				}
-			}
 
-			dgrid.ItemsSource = records;
+				dgrid.ItemsSource = records;
+			}
+			catch (Exception e) { }
+
 		}
 
-		private void triggerTool()
+		private void excuteCrawl()
 		{
 			try
 			{
@@ -221,7 +227,7 @@ namespace ShbChecker
 				//create the reference for the browser  
 				ChromeOptions options = new ChromeOptions();
 				//options.AddArgument("--headless");
-				IWebDriver driver = new ChromeDriver(options);
+				driver = new ChromeDriver(options);
 				driver.Navigate().GoToUrl("https://lossupport.shbfinance.com.vn/home");
 				var eles = driver.FindElements(By.ClassName("form-control"));
 
@@ -234,9 +240,11 @@ namespace ShbChecker
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/ul[1]/li[1]/a[1]/span[1]"))).Click();
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[2]/ul[1]/li[4]/a[1]/span[1]"))).Click();
 				Thread.Sleep(3000);
-				//Console.Clear();
+				Console.Clear();
 				string[] results = new string[10000];
 				int i = 0;
+				string cmnd = "";
+				string name = "";
 				using (var stream = File.Open(excelPathStr, FileMode.Open, FileAccess.Read))
 				{
 					using (var reader = ExcelReaderFactory.CreateReader(stream))
@@ -248,8 +256,8 @@ namespace ShbChecker
 								if (i == 0) { i++; continue; }
 								try
 								{
-									string name = Convert.ToString(reader.GetValue(0));
-									string cmnd = Convert.ToString(reader.GetValue(1));
+									name = Convert.ToString(reader.GetValue(0));
+									cmnd = Convert.ToString(reader.GetValue(1));
 									string res = "White";
 
 									IWebElement cmndEle = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/input[1]"));
@@ -258,59 +266,66 @@ namespace ShbChecker
 									cmndEle.SendKeys(cmnd);
 									Thread.Sleep(1000);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[1]")).Click(); // click tim kiem    
-									IWebElement loading = wait.Until(e => e.FindElement(By.ClassName("z-loading-indicator"))); // click tim kiem    
+									IWebElement loading = wait.Until(e => e.FindElement(By.ClassName("z-loading-indicator"))); // click tim kiem  
+									
 									if (loading.Displayed == true)
 									{
 										bool foundS37 = false;
-										int cntWait = 0;
-										while (cntWait <= 100)
-										{
-											IWebElement s37Link = driver.FindElements(By.ClassName("z-a"))[1];
-											if (s37Link.Text.Contains("S37"))
-											{
-												((IJavaScriptExecutor)driver).ExecuteScript("document.getElementsByClassName('z-a')[1].click();");
-												var cap = wait.Until(e => e.FindElements(By.ClassName("z-caption-content")));
-												while (!cap.Last().Displayed) Thread.Sleep(100);
-												string tmp = (wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[3]/div[2]/div[8]/span[2]")))).Text;
-												if (tmp.Length != 0) res = tmp;
+										bool foundNoti404 = false;
 
-												string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
-												results.SetValue(record, i++);
+										IWebElement notiNotFound = null;
+										IWebElement s37lnk = null;
+
+										MessageBox.Show("AAAAAA: "+ foundS37.ToString() + " " + foundNoti404.ToString());
+										wait.Until(e => {
+											notiNotFound = e.FindElement(By.ClassName("z-notification-content"));
+											s37lnk = e.FindElements(By.ClassName("z-a"))[1];
+
+											if (notiNotFound.Displayed && notiNotFound.Text.Contains("Không có dữ liệu"))
+											{
+												foundNoti404 = true;
+												Console.WriteLine("123");
+												return true;
+											}
+											if (s37lnk.Text.Contains("S37"))
+											{
+												Console.WriteLine("456");
 												foundS37 = true;
-												break;
 											}
+											
+											return false;
+										});
 
-											Thread.Sleep(250);
-											cntWait++;
-										}
-
-										if (!foundS37)
+										MessageBox.Show("BBBBBBBBB: "+ foundS37.ToString() + " " + foundNoti404.ToString());
+										// ---------------------------------------------------------------------------------------------------------------
+										if (foundS37)
 										{
-											//Console.WriteLine("WTF; " + cntWait * 250 / 1000);
-											try
-											{
-												WebDriverWait wait2 = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-												IWebElement noti = wait2.Until(e => e.FindElement(By.ClassName("z-notification-content")));
-												if (noti.Displayed && noti.Text.Contains("Không có dữ liệu"))
-												{
-													res = "Không tìm thấy";
-													string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
-													results.SetValue(record, i++);
-													Thread.Sleep(3000);
-												}
-											}
-											catch (Exception e)
-											{
-												//Console.WriteLine(e);
-											}
+											((IJavaScriptExecutor)driver).ExecuteScript("document.getElementsByClassName('z-a')[1].click();");
+											var cap = wait.Until(e => e.FindElements(By.ClassName("z-caption-content")));
+											while (!cap.Last().Displayed) Thread.Sleep(100);
+											string tmp = (wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[3]/div[2]/div[8]/span[2]")))).Text;
+											if (tmp.Length != 0) res = tmp;
+
+											string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
+											results.SetValue(record, i++);
+											foundS37 = true;
+											break;
+										}
+										else if (foundNoti404)
+										{
+											res = "Không tìm thấy";
+											Console.WriteLine("Không tìm thấy");
+											string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
+											results.SetValue(record, i++);
+											Thread.Sleep(3000);
 										}
 									}
 
-									this.Dispatcher.Invoke(() => {
+									Dispatcher.Invoke(() =>
+									{
 										((Record)records[i - 1]).Result1 = res;
 									});
 
-									//Console.WriteLine("DONE " + i);
 									fullnameEle.Clear();
 									cmndEle.Clear();
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
@@ -320,6 +335,12 @@ namespace ShbChecker
 								}
 								catch (Exception e1)
 								{
+									string record = "=\"" + cmnd + "\"" + "," + name + "," + "Không tìm thấy";
+									results.SetValue(record, i++);
+									this.Dispatcher.Invoke(() =>
+									{
+										((Record)records[i - 1]).Result1 = "Không tìm thấy hoặc có lỗi xảy ra";
+									});
 									// Console.WriteLine(e1);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
 									Thread.Sleep(4000);
@@ -340,6 +361,27 @@ namespace ShbChecker
 			}
 			catch (Exception wtf) { }
 		}
+
+		public void closeBrowser()
+		{
+			driver.Close();
+			var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
+			foreach (var process in chromeDriverProcesses) process.Kill();
+		}
+
+		protected override void OnClosing(CancelEventArgs e)
+		{
+			try
+			{
+				new Thread(closeBrowser).Start();
+			}
+			catch (Exception er)
+			{
+
+			}
+			base.OnClosing(e);
+		}
+		
 	}
 
 	public class User
@@ -408,16 +450,6 @@ namespace ShbChecker
 			}
 		}
 	}
-
-	//public class MainViewModel : ObservableObject
-	//{
-	//	public ObservableCollection<Record> Table { get; set; }
-
-	//	public MainViewModel()
-	//	{
-	//		Table = new ObservableCollection<Record>();
-	//	}
-	//}
 
 	public class ObservableObject : INotifyPropertyChanged
 	{
