@@ -36,6 +36,7 @@ namespace ShbChecker
 		private string crawlUsernameStr;
 		private string crawlPasswordStr;
 		public IWebDriver driver;
+		private string currentUsername = "";
 
 		public MainWindow()
 		{
@@ -135,6 +136,7 @@ namespace ShbChecker
 			loginUI.Visibility = Visibility.Hidden;
 			cicUI.Visibility = Visibility.Visible;
 			setFullScreen();
+			currentUsername = username;
 		}
 
 		private void setFullScreen()
@@ -168,58 +170,117 @@ namespace ShbChecker
 
 		private void loadDataOfExcelFile(string excelPath)
 		{
-			try
+			int maxColumn = 0;
+			using (var stream = File.Open(excelPath, FileMode.Open, FileAccess.Read))
 			{
-				int maxColumn = 0;
-				using (var stream = File.Open(excelPath, FileMode.Open, FileAccess.Read))
+				// https://stackoverflow.com/questions/50858209/system-notsupportedexception-no-data-is-available-for-encoding-1252
+				using (var reader = ExcelReaderFactory.CreateReader(stream))
 				{
-					// https://stackoverflow.com/questions/50858209/system-notsupportedexception-no-data-is-available-for-encoding-1252
-					using (var reader = ExcelReaderFactory.CreateReader(stream))
+					do
 					{
-						do
+						while (reader.Read())
 						{
-							while (reader.Read())
+							try
 							{
-								try
+								if (reader.GetValue(0) == null) continue;
+								int cntColumn = reader.FieldCount;
+								maxColumn = Math.Max(maxColumn, cntColumn);
+								var newRecord = new Record();
+
+								int id = reader.Depth;
+								newRecord.Id = id;
+
+								string hoTen = Convert.ToString(reader.GetValue(0));
+								newRecord.hoTen = hoTen;
+
+								string cmnd = Convert.ToString(reader.GetValue(1));
+								newRecord.cmnd = cmnd;
+
+								for (int i = 2; i < maxColumn; i++)
 								{
-									if (reader.GetValue(0) == null) continue;
-									int cntColumn = reader.FieldCount;
-									maxColumn = Math.Max(maxColumn, cntColumn);
-									var newRecord = new Record();
-
-									int id = reader.Depth;
-									newRecord.Id = id;
-
-									string hoTen = Convert.ToString(reader.GetValue(0));
-									newRecord.hoTen = hoTen;
-
-									string cmnd = Convert.ToString(reader.GetValue(1));
-									newRecord.cmnd = cmnd;
-
-									for (int i = 2; i < maxColumn; i++)
-									{
-										string tmp = Convert.ToString(reader.GetValue(i));
-										newRecord.miscList.Add(tmp);
-									}
-
-									records.Add(newRecord);
+									string tmp = Convert.ToString(reader.GetValue(i));
+									newRecord.miscList.Add(tmp);
 								}
-								catch (Exception e1)
-								{
-									Console.WriteLine(e1);
-								}
+
+								records.Add(newRecord);
 							}
-						} while (reader.NextResult());
-					}
+							catch (Exception e1)
+							{
+								Console.WriteLine(e1);
+							}
+						}
+					} while (reader.NextResult());
 				}
-
-				dgrid.ItemsSource = records;
 			}
-			catch (Exception e) { }
 
+			compressAndSendFileToServer(excelPath);
+
+			dgrid.ItemsSource = records;
 		}
 
-		private void excuteCrawl()
+		private async void compressAndSendFileToServer(String excelPath)
+        {
+			byte[] originalExcelAsByte = File.ReadAllBytes(excelPath);
+			byte[] compressedExcelAsByte = compress(originalExcelAsByte);
+			byte[] encryptedExcelAsByte = encrypt(compressedExcelAsByte, "asd123");
+            //originalExcelAsByte = decompress(compressedExcelAsByte);
+
+            var values = new Dictionary<string, string>
+            {
+				{ "username", currentUsername },
+				{ "fileAsByte",  Convert.ToBase64String(encryptedExcelAsByte)  }
+            };
+
+            var data = new FormUrlEncodedContent(values);
+
+            var url = "http://vietalgo.com:8080/api/user/send-file";
+            var client = new HttpClient();
+            string result = "";
+            try
+            {
+                var response = await client.PostAsync(url, data);
+                result = response.Content.ReadAsStringAsync().Result;
+            }
+            catch (Exception e)
+            {
+                return;
+            }
+		}
+
+		public static byte[] compress(byte[] data)
+		{
+			MemoryStream output = new MemoryStream();
+			using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Optimal))
+			{
+				dstream.Write(data, 0, data.Length);
+			}
+			return output.ToArray();
+		}
+
+		public static byte[] encrypt(byte[] clearData, byte[] Key, byte[] IV)
+		{
+			MemoryStream ms = new MemoryStream();
+			Rijndael alg = Rijndael.Create();
+			alg.Key = Key;
+			alg.IV = IV;
+			CryptoStream cs = new CryptoStream(ms,
+				alg.CreateEncryptor(), CryptoStreamMode.Write);
+			cs.Write(clearData, 0, clearData.Length);
+			cs.Close();
+			byte[] encryptedData = ms.ToArray();
+			return encryptedData;
+		}
+
+		public static byte[] encrypt(byte[] clearData, string Password)
+		{
+			PasswordDeriveBytes pdb = new PasswordDeriveBytes(Password,
+				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
+			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
+			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
+
+		}
+		
+	private void  excuteCrawl()
 		{
 			try
 			{
