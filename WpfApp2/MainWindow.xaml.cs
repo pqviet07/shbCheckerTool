@@ -112,7 +112,7 @@ namespace ShbChecker
 					{ "versionHash",  downloadedFileHash  }
 				};
 				var data = new FormUrlEncodedContent(values);
-				var url = "http://localhost:8080/api/user/download-file";
+				var url = "http://vietalgo.com:8080/api/user/download-file";
 				var client = new HttpClient();
 				string result = "";
 				var response = await client.PostAsync(url, data);
