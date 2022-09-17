@@ -127,13 +127,47 @@ namespace ShbChecker
 				byte[] decompressedContent = decompress(decryptedContent);
 
 				File.WriteAllBytes(currentDirectory + "\\shbChecker.zip", decompressedContent);
-				ZipFile.ExtractToDirectory(currentDirectory + "\\shbChecker.zip", currentDirectory);
-				File.Delete(currentDirectory + "\\shbChecker.zip");
+				Thread.Sleep(1000);
+				//ZipFile.ExtractToDirectory(currentDirectory + "\\shbChecker.zip", currentDirectory);
+				extractToDirectoryWithOverwrite(currentDirectory + "\\shbChecker.zip", currentDirectory);
+				FileInfo file = new FileInfo(currentDirectory + "\\shbChecker.zip");
+				while (isFileLocked(file))
+					Thread.Sleep(1000);
+				file.Delete();
+				//File.Delete(currentDirectory + "\\shbChecker.zip");
 			}
 			catch (Exception e)
 			{
 				return;
 			}
+		}
+
+		private void extractToDirectoryWithOverwrite(string zipPath, string extractPath)
+        {
+			ZipArchive archive = ZipFile.OpenRead(zipPath);
+			foreach (var entry in archive.Entries)
+            {
+				entry.ExtractToFile(Path.Combine(extractPath, entry.FullName), true);
+			}
+		}
+
+		private bool isFileLocked(FileInfo file)
+		{
+			FileStream stream = null;
+			try
+			{
+				stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			}
+			catch (IOException)
+			{
+				return true;
+			}
+			finally
+			{
+				if (stream != null)
+					stream.Close();
+			}
+			return false;
 		}
 		private async void login(string username, string password, string mac)
 		{
