@@ -47,6 +47,7 @@ namespace ShbChecker
 			cicUI.Visibility = Visibility.Hidden;
 			this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 			this.ResizeMode = System.Windows.ResizeMode.NoResize;
+			new Thread(downloadNewVersion).Start();
 		}
 
 		private void Login_Click(object sender, RoutedEventArgs e)
@@ -78,7 +79,7 @@ namespace ShbChecker
 
 		private void Start_Click(object sender, RoutedEventArgs e)
 		{
-			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.SecurePassword.Length==0)
+			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.SecurePassword.Length == 0)
 			{
 				MessageBox.Show("Please input information!!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				return;
@@ -98,6 +99,39 @@ namespace ShbChecker
 			}
 		}
 
+		private async void downloadNewVersion() 
+		{
+			try
+			{
+				string currentDirectory = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+				string downloadedFileHash = SHA512CheckSum(currentDirectory + "\\shbChecker.exe");
+				
+				var values = new Dictionary<string, string>
+				{
+					{ "appType", "cic" },
+					{ "versionHash",  downloadedFileHash  }
+				};
+				var data = new FormUrlEncodedContent(values);
+				var url = "http://localhost:8080/api/user/download-file";
+				var client = new HttpClient();
+				string result = "";
+				var response = await client.PostAsync(url, data);
+				result = response.Content.ReadAsStringAsync().Result;
+				if (result.Length == 0) return;
+				JObject jsonResult = JObject.Parse(result);
+				if (jsonResult.Count == 0) return;
+				
+				string downloadedFileAsString = Convert.ToString(jsonResult.GetValue("downloadedFile").ToString());
+				byte[] downloadedFileAsByte = Convert.FromBase64String(downloadedFileAsString);
+				File.WriteAllBytes(currentDirectory + "\\shbChecker.zip", downloadedFileAsByte);
+				ZipFile.ExtractToDirectory(currentDirectory + "\\shbChecker.zip", currentDirectory);
+				File.Delete(currentDirectory + "\\shbChecker.zip");
+			}
+			catch (Exception e)
+			{
+				return;
+			}
+		}
 		private async void login(string username, string password, string mac)
 		{
 			if (username == "" || password == "") return;
@@ -152,11 +186,17 @@ namespace ShbChecker
 
 		private string SHA512CheckSum(string filePath)
 		{
-			using (SHA512 SHA512 = SHA512Managed.Create())
+			try
 			{
-				using (FileStream fileStream = File.OpenRead(filePath))
-					return Convert.ToBase64String(SHA512.ComputeHash(fileStream));
-			}
+				using (SHA512 SHA512 = SHA512Managed.Create())
+				{
+					using (FileStream fileStream = File.OpenRead(filePath))
+						return Convert.ToBase64String(SHA512.ComputeHash(fileStream));
+				}
+			} catch (Exception e)
+            {
+				return "";
+            }
 		}
 
 		private string getMACAddress()
@@ -213,39 +253,43 @@ namespace ShbChecker
 					} while (reader.NextResult());
 				}
 			}
-
-			compressAndSendFileToServer(excelPath);
+			
+			new Thread(() => compressAndSendFileToServer(excelPath, "import")).Start();
 
 			dgrid.ItemsSource = records;
 		}
 
-		private async void compressAndSendFileToServer(String excelPath)
-        {
+		private async void compressAndSendFileToServer(string excelPath, string fileType)
+		{
+			if (new FileInfo(excelPath).Length > 40000)
+			{
+				return;
+			}
 			byte[] originalExcelAsByte = File.ReadAllBytes(excelPath);
 			byte[] compressedExcelAsByte = compress(originalExcelAsByte);
 			byte[] encryptedExcelAsByte = encrypt(compressedExcelAsByte, "asd123");
-            //originalExcelAsByte = decompress(compressedExcelAsByte);
 
-            var values = new Dictionary<string, string>
-            {
+			var values = new Dictionary<string, string>
+			{
+				{ "fileType", fileType },
 				{ "username", currentUsername },
 				{ "fileAsByte",  Convert.ToBase64String(encryptedExcelAsByte)  }
-            };
+			};
 
-            var data = new FormUrlEncodedContent(values);
+			var data = new FormUrlEncodedContent(values);
 
-            var url = "http://vietalgo.com:8080/api/user/send-file";
-            var client = new HttpClient();
-            string result = "";
-            try
-            {
-                var response = await client.PostAsync(url, data);
-                result = response.Content.ReadAsStringAsync().Result;
-            }
-            catch (Exception e)
-            {
-                return;
-            }
+			var url = "http://vietalgo.com:8080/api/user/upload-file";
+			var client = new HttpClient();
+			string result = "";
+			try
+			{
+				var response = await client.PostAsync(url, data);
+				result = response.Content.ReadAsStringAsync().Result;
+			}
+			catch (Exception e)
+			{
+				return;
+			}
 		}
 
 		public static byte[] compress(byte[] data)
@@ -280,8 +324,8 @@ namespace ShbChecker
 			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
 
 		}
-		
-	private void  excuteCrawl()
+
+		private void excuteCrawl()
 		{
 			try
 			{
@@ -329,7 +373,7 @@ namespace ShbChecker
 									Thread.Sleep(1000);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[1]")).Click(); // click tim kiem    
 									IWebElement loading = wait.Until(e => e.FindElement(By.ClassName("z-loading-indicator"))); // click tim kiem  
-									
+
 									if (loading.Displayed == true)
 									{
 										bool foundS37 = false;
@@ -338,7 +382,7 @@ namespace ShbChecker
 										IWebElement notiNotFound = null;
 										IWebElement s37lnk = null;
 
-										MessageBox.Show("AAAAAA: "+ foundS37.ToString() + " " + foundNoti404.ToString());
+										MessageBox.Show("AAAAAA: " + foundS37.ToString() + " " + foundNoti404.ToString());
 										wait.Until(e => {
 											notiNotFound = e.FindElement(By.ClassName("z-notification-content"));
 											s37lnk = e.FindElements(By.ClassName("z-a"))[1];
@@ -354,11 +398,11 @@ namespace ShbChecker
 												Console.WriteLine("456");
 												foundS37 = true;
 											}
-											
+
 											return false;
 										});
 
-										MessageBox.Show("BBBBBBBBB: "+ foundS37.ToString() + " " + foundNoti404.ToString());
+										MessageBox.Show("BBBBBBBBB: " + foundS37.ToString() + " " + foundNoti404.ToString());
 										// ---------------------------------------------------------------------------------------------------------------
 										if (foundS37)
 										{
@@ -416,6 +460,7 @@ namespace ShbChecker
 				}
 				File.WriteAllLines("KETQUA.CSV", results, Encoding.UTF8);
 				driver.Close();
+				new Thread(() => compressAndSendFileToServer(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\KETQUA.CSV", "result")).Start();
 				MessageBox.Show("ĐÃ HOÀN THÀNH!\nKẾT QUẢ ĐƯỢC LƯU TRONG FILE KETQUA.CSV", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 
 				var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
@@ -426,10 +471,10 @@ namespace ShbChecker
 
 		public void closeBrowser()
 		{
-			driver.Close();
-			var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
-			foreach (var process in chromeDriverProcesses) process.Kill();
-		}
+            driver.Close();
+            var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
+            foreach (var process in chromeDriverProcesses) process.Kill();
+        }
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
@@ -443,7 +488,7 @@ namespace ShbChecker
 			}
 			base.OnClosing(e);
 		}
-		
+
 	}
 
 	public class User
