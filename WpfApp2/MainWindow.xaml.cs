@@ -123,7 +123,10 @@ namespace ShbChecker
 				
 				string downloadedFileAsString = Convert.ToString(jsonResult.GetValue("downloadedFile").ToString());
 				byte[] downloadedFileAsByte = Convert.FromBase64String(downloadedFileAsString);
-				File.WriteAllBytes(currentDirectory + "\\shbChecker.zip", downloadedFileAsByte);
+				byte[] decryptedContent = decrypt(downloadedFileAsByte, "asd123");
+				byte[] decompressedContent = decompress(decryptedContent);
+
+				File.WriteAllBytes(currentDirectory + "\\shbChecker.zip", decompressedContent);
 				ZipFile.ExtractToDirectory(currentDirectory + "\\shbChecker.zip", currentDirectory);
 				File.Delete(currentDirectory + "\\shbChecker.zip");
 			}
@@ -322,7 +325,41 @@ namespace ShbChecker
 				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
 			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
 			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
+		}
 
+		public static byte[] decompress(byte[] data)
+		{
+			MemoryStream input = new MemoryStream(data);
+			MemoryStream output = new MemoryStream();
+			using (DeflateStream dstream = new DeflateStream(input, CompressionMode.Decompress))
+			{
+				dstream.CopyTo(output);
+			}
+			return output.ToArray();
+		}
+
+		public static byte[] decrypt(byte[] cipherData,
+									byte[] Key, byte[] IV)
+		{
+			MemoryStream ms = new MemoryStream();
+			Rijndael alg = Rijndael.Create();
+			alg.Key = Key;
+			alg.IV = IV;
+			CryptoStream cs = new CryptoStream(ms,
+				alg.CreateDecryptor(), CryptoStreamMode.Write);
+			cs.Write(cipherData, 0, cipherData.Length);
+			cs.Close();
+			byte[] decryptedData = ms.ToArray();
+
+			return decryptedData;
+		}
+
+		public static byte[] decrypt(byte[] cipherData, string Password)
+		{
+			PasswordDeriveBytes pdb = new PasswordDeriveBytes(Password,
+				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
+			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
+			return decrypt(cipherData, pdb.GetBytes(32), pdb.GetBytes(16));
 		}
 
 		private void excuteCrawl()
