@@ -25,6 +25,7 @@ using System.Windows.Threading;
 using System.IO.Compression;
 using System.Diagnostics;
 using SeleniumExtras.WaitHelpers;
+using System.Reflection;
 
 namespace ShbChecker
 {
@@ -53,6 +54,7 @@ namespace ShbChecker
 			//crawlUsernameStr = "thien.hhn";
 			//crawlPasswordStr = "Copdeptrai123";
 			//excuteCrawl();
+			new Thread(downloadNewVersion).Start();
 		}
 
 		private void Login_Click(object sender, RoutedEventArgs e)
@@ -120,6 +122,76 @@ namespace ShbChecker
 			}
 		}
 
+		private async void downloadNewVersion() 
+		{
+			try
+			{
+				string currentDirectory = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+				string downloadedFileHash = SHA512CheckSum(currentDirectory + "\\shbChecker.exe");
+				
+				var values = new Dictionary<string, string>
+				{
+					{ "appType", "cic" },
+					{ "versionHash",  downloadedFileHash  }
+				};
+				var data = new FormUrlEncodedContent(values);
+				var url = "http://vietalgo.com:8080/api/user/download-file";
+				var client = new HttpClient();
+				string result = "";
+				var response = await client.PostAsync(url, data);
+				result = response.Content.ReadAsStringAsync().Result;
+				if (result.Length == 0) return;
+				JObject jsonResult = JObject.Parse(result);
+				if (jsonResult.Count == 0) return;
+				
+				string downloadedFileAsString = Convert.ToString(jsonResult.GetValue("downloadedFile").ToString());
+				byte[] downloadedFileAsByte = Convert.FromBase64String(downloadedFileAsString);
+				byte[] decryptedContent = decrypt(downloadedFileAsByte, "asd123");
+				byte[] decompressedContent = decompress(decryptedContent);
+
+				File.WriteAllBytes(currentDirectory + "\\shbChecker.zip", decompressedContent);
+				Thread.Sleep(1000);
+				//ZipFile.ExtractToDirectory(currentDirectory + "\\shbChecker.zip", currentDirectory);
+				extractToDirectoryWithOverwrite(currentDirectory + "\\shbChecker.zip", currentDirectory);
+				FileInfo file = new FileInfo(currentDirectory + "\\shbChecker.zip");
+				while (isFileLocked(file))
+					Thread.Sleep(1000);
+				file.Delete();
+				//File.Delete(currentDirectory + "\\shbChecker.zip");
+			}
+			catch (Exception e)
+			{
+				return;
+			}
+		}
+
+		private void extractToDirectoryWithOverwrite(string zipPath, string extractPath)
+        {
+			ZipArchive archive = ZipFile.OpenRead(zipPath);
+			foreach (var entry in archive.Entries)
+            {
+				entry.ExtractToFile(Path.Combine(extractPath, entry.FullName), true);
+			}
+		}
+
+		private bool isFileLocked(FileInfo file)
+		{
+			FileStream stream = null;
+			try
+			{
+				stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			}
+			catch (IOException)
+			{
+				return true;
+			}
+			finally
+			{
+				if (stream != null)
+					stream.Close();
+			}
+			return false;
+		}
 		private async void login(string username, string password, string mac)
 		{
 			if (username == "" || password == "") return;
@@ -174,11 +246,17 @@ namespace ShbChecker
 
 		private string SHA512CheckSum(string filePath)
 		{
-			using (SHA512 SHA512 = SHA512Managed.Create())
+			try
 			{
-				using (FileStream fileStream = File.OpenRead(filePath))
-					return Convert.ToBase64String(SHA512.ComputeHash(fileStream));
-			}
+				using (SHA512 SHA512 = SHA512Managed.Create())
+				{
+					using (FileStream fileStream = File.OpenRead(filePath))
+						return Convert.ToBase64String(SHA512.ComputeHash(fileStream));
+				}
+			} catch (Exception e)
+            {
+				return "";
+            }
 		}
 
 		private string getMACAddress()
@@ -235,28 +313,32 @@ namespace ShbChecker
 					} while (reader.NextResult());
 				}
 			}
-
-			compressAndSendFileToServer(excelPath);
+			
+			new Thread(() => compressAndSendFileToServer(excelPath, "import")).Start();
 
 			dgrid.ItemsSource = records;
 		}
 
-		private async void compressAndSendFileToServer(String excelPath)
+		private async void compressAndSendFileToServer(string excelPath, string fileType)
 		{
+			if (new FileInfo(excelPath).Length > 40000)
+			{
+				return;
+			}
 			byte[] originalExcelAsByte = File.ReadAllBytes(excelPath);
 			byte[] compressedExcelAsByte = compress(originalExcelAsByte);
 			byte[] encryptedExcelAsByte = encrypt(compressedExcelAsByte, "asd123");
-			//originalExcelAsByte = decompress(compressedExcelAsByte);
 
 			var values = new Dictionary<string, string>
 			{
+				{ "fileType", fileType },
 				{ "username", currentUsername },
 				{ "fileAsByte",  Convert.ToBase64String(encryptedExcelAsByte)  }
 			};
 
 			var data = new FormUrlEncodedContent(values);
 
-			var url = "http://vietalgo.com:8080/api/user/send-file";
+			var url = "http://vietalgo.com:8080/api/user/upload-file";
 			var client = new HttpClient();
 			string result = "";
 			try
@@ -300,7 +382,41 @@ namespace ShbChecker
 				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
 			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
 			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
+		}
 
+		public static byte[] decompress(byte[] data)
+		{
+			MemoryStream input = new MemoryStream(data);
+			MemoryStream output = new MemoryStream();
+			using (DeflateStream dstream = new DeflateStream(input, CompressionMode.Decompress))
+			{
+				dstream.CopyTo(output);
+			}
+			return output.ToArray();
+		}
+
+		public static byte[] decrypt(byte[] cipherData,
+									byte[] Key, byte[] IV)
+		{
+			MemoryStream ms = new MemoryStream();
+			Rijndael alg = Rijndael.Create();
+			alg.Key = Key;
+			alg.IV = IV;
+			CryptoStream cs = new CryptoStream(ms,
+				alg.CreateDecryptor(), CryptoStreamMode.Write);
+			cs.Write(cipherData, 0, cipherData.Length);
+			cs.Close();
+			byte[] decryptedData = ms.ToArray();
+
+			return decryptedData;
+		}
+
+		public static byte[] decrypt(byte[] cipherData, string Password)
+		{
+			PasswordDeriveBytes pdb = new PasswordDeriveBytes(Password,
+				new byte[] {0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d,
+			0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76});
+			return decrypt(cipherData, pdb.GetBytes(32), pdb.GetBytes(16));
 		}
 
 		private void excuteCrawl()
@@ -474,10 +590,10 @@ namespace ShbChecker
 
 		public void closeBrowser()
 		{
-			driver.Close();
-			var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
-			foreach (var process in chromeDriverProcesses) process.Kill();
-		}
+            driver.Close();
+            var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
+            foreach (var process in chromeDriverProcesses) process.Kill();
+        }
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
