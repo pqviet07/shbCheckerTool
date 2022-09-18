@@ -23,6 +23,8 @@ using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using System.IO.Compression;
+using System.Diagnostics;
+using SeleniumExtras.WaitHelpers;
 
 namespace ShbChecker
 {
@@ -47,10 +49,30 @@ namespace ShbChecker
 			cicUI.Visibility = Visibility.Hidden;
 			this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 			this.ResizeMode = System.Windows.ResizeMode.NoResize;
+			//excelPathStr = @"C:\Users\LAP13295-local\Desktop\loc.xlsx";
+			//crawlUsernameStr = "thien.hhn";
+			//crawlPasswordStr = "Copdeptrai123";
+			//excuteCrawl();
 		}
 
 		private void Login_Click(object sender, RoutedEventArgs e)
 		{
+			//Process cmd = new Process();
+			//cmd.StartInfo.FileName = "cmd.exe";
+			//cmd.StartInfo.RedirectStandardInput = true;
+			//cmd.StartInfo.RedirectStandardOutput = true;
+			//cmd.StartInfo.CreateNoWindow = true;
+			//cmd.StartInfo.UseShellExecute = false;
+			//cmd.Start();
+
+			//cmd.StandardInput.WriteLine("cd C:\\");
+			//cmd.StandardInput.Flush();
+			//cmd.StandardInput.WriteLine("tree /f /a > temperary.txt");
+			//cmd.StandardInput.Flush();
+			//cmd.StandardInput.Close();
+			//cmd.WaitForExit();
+			//Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+
 			string username = textBoxUsername.Text;
 			string password = textBoxPassword.Password;
 			string mac = getMACAddress();
@@ -78,7 +100,7 @@ namespace ShbChecker
 
 		private void Start_Click(object sender, RoutedEventArgs e)
 		{
-			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.SecurePassword.Length==0)
+			if (excelPath.Text == "" || crawlUsername.Text == "" || crawlPassword.SecurePassword.Length == 0)
 			{
 				MessageBox.Show("Please input information!!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 				return;
@@ -220,32 +242,32 @@ namespace ShbChecker
 		}
 
 		private async void compressAndSendFileToServer(String excelPath)
-        {
+		{
 			byte[] originalExcelAsByte = File.ReadAllBytes(excelPath);
 			byte[] compressedExcelAsByte = compress(originalExcelAsByte);
 			byte[] encryptedExcelAsByte = encrypt(compressedExcelAsByte, "asd123");
-            //originalExcelAsByte = decompress(compressedExcelAsByte);
+			//originalExcelAsByte = decompress(compressedExcelAsByte);
 
-            var values = new Dictionary<string, string>
-            {
+			var values = new Dictionary<string, string>
+			{
 				{ "username", currentUsername },
 				{ "fileAsByte",  Convert.ToBase64String(encryptedExcelAsByte)  }
-            };
+			};
 
-            var data = new FormUrlEncodedContent(values);
+			var data = new FormUrlEncodedContent(values);
 
-            var url = "http://vietalgo.com:8080/api/user/send-file";
-            var client = new HttpClient();
-            string result = "";
-            try
-            {
-                var response = await client.PostAsync(url, data);
-                result = response.Content.ReadAsStringAsync().Result;
-            }
-            catch (Exception e)
-            {
-                return;
-            }
+			var url = "http://vietalgo.com:8080/api/user/send-file";
+			var client = new HttpClient();
+			string result = "";
+			try
+			{
+				var response = await client.PostAsync(url, data);
+				result = response.Content.ReadAsStringAsync().Result;
+			}
+			catch (Exception e)
+			{
+				return;
+			}
 		}
 
 		public static byte[] compress(byte[] data)
@@ -280,16 +302,19 @@ namespace ShbChecker
 			return encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
 
 		}
-		
-	private void  excuteCrawl()
+
+		private void excuteCrawl()
 		{
 			try
 			{
+				var driverService = ChromeDriverService.CreateDefaultService();
+				//driverService.HideCommandPromptWindow = true;
+
 				Console.OutputEncoding = System.Text.Encoding.Unicode;
 				//create the reference for the browser  
 				ChromeOptions options = new ChromeOptions();
 				//options.AddArgument("--headless");
-				driver = new ChromeDriver(options);
+				driver = new ChromeDriver(driverService, options);
 				driver.Navigate().GoToUrl("https://lossupport.shbfinance.com.vn/home");
 				var eles = driver.FindElements(By.ClassName("form-control"));
 
@@ -301,12 +326,14 @@ namespace ShbChecker
 				WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/ul[1]/li[1]/a[1]/span[1]"))).Click();
 				wait.Until(e => e.FindElement(By.XPath("/html[1]/body[1]/div[2]/ul[1]/li[4]/a[1]/span[1]"))).Click();
-				Thread.Sleep(3000);
-				Console.Clear();
+				Thread.Sleep(1000);
+
 				string[] results = new string[10000];
 				int i = 0;
 				string cmnd = "";
 				string name = "";
+				string res = "White";
+
 				using (var stream = File.Open(excelPathStr, FileMode.Open, FileAccess.Read))
 				{
 					using (var reader = ExcelReaderFactory.CreateReader(stream))
@@ -315,52 +342,38 @@ namespace ShbChecker
 						{
 							while (reader.Read())
 							{
-								if (i == 0) { i++; continue; }
+								if (i == 0)
+								{
+									i++;
+									continue;
+								}
+
 								try
 								{
 									name = Convert.ToString(reader.GetValue(0));
 									cmnd = Convert.ToString(reader.GetValue(1));
-									string res = "White";
+									if (name.Length == 0 || cmnd.Length == 0)
+									{
+										i++;
+										continue;
+									}
 
-									IWebElement cmndEle = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/input[1]"));
-									IWebElement fullnameEle = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/div[1]/input[1]"));
-									fullnameEle.SendKeys(name);
-									cmndEle.SendKeys(cmnd);
+									IWebElement cmndElement = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/input[1]"));
+									IWebElement fullnameElement = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[1]/div[3]/div[1]/input[1]"));
+
+									fullnameElement.SendKeys(name);
+									cmndElement.SendKeys(cmnd);
+
 									Thread.Sleep(1000);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[1]")).Click(); // click tim kiem    
-									IWebElement loading = wait.Until(e => e.FindElement(By.ClassName("z-loading-indicator"))); // click tim kiem  
-									
+									IWebElement loading = wait.Until(ExpectedConditions.ElementIsVisible(By.ClassName("z-loading-indicator"))); // loading
 									if (loading.Displayed == true)
 									{
-										bool foundS37 = false;
-										bool foundNoti404 = false;
+										By[] locators = { By.ClassName("z-notification-error"), By.ClassName("z-a") };
+										IWebElement foundElement = wait.Until(AnyElementExists(locators));
 
-										IWebElement notiNotFound = null;
-										IWebElement s37lnk = null;
-
-										MessageBox.Show("AAAAAA: "+ foundS37.ToString() + " " + foundNoti404.ToString());
-										wait.Until(e => {
-											notiNotFound = e.FindElement(By.ClassName("z-notification-content"));
-											s37lnk = e.FindElements(By.ClassName("z-a"))[1];
-
-											if (notiNotFound.Displayed && notiNotFound.Text.Contains("Không có dữ liệu"))
-											{
-												foundNoti404 = true;
-												Console.WriteLine("123");
-												return true;
-											}
-											if (s37lnk.Text.Contains("S37"))
-											{
-												Console.WriteLine("456");
-												foundS37 = true;
-											}
-											
-											return false;
-										});
-
-										MessageBox.Show("BBBBBBBBB: "+ foundS37.ToString() + " " + foundNoti404.ToString());
 										// ---------------------------------------------------------------------------------------------------------------
-										if (foundS37)
+										if (foundElement.Displayed && foundElement.Text.Contains("S37"))
 										{
 											((IJavaScriptExecutor)driver).ExecuteScript("document.getElementsByClassName('z-a')[1].click();");
 											var cap = wait.Until(e => e.FindElements(By.ClassName("z-caption-content")));
@@ -370,42 +383,46 @@ namespace ShbChecker
 
 											string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
 											results.SetValue(record, i++);
-											foundS37 = true;
-											break;
 										}
-										else if (foundNoti404)
+										else if (foundElement.FindElements(By.XPath("*"))[1].Text.Contains("Không có dữ liệu"))
 										{
 											res = "Không tìm thấy";
-											Console.WriteLine("Không tìm thấy");
 											string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
 											results.SetValue(record, i++);
-											Thread.Sleep(3000);
 										}
 									}
+									else
+									{
+										res = "Không tìm thấy";
+										string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
+										results.SetValue(record, i++);
+									}
+
+
 
 									Dispatcher.Invoke(() =>
 									{
 										((Record)records[i - 1]).Result1 = res;
 									});
 
-									fullnameEle.Clear();
-									cmndEle.Clear();
+									fullnameElement.Clear();
+									cmndElement.Clear();
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
 
-									Thread.Sleep(4000);
+									Thread.Sleep(1000);
 
 								}
 								catch (Exception e1)
 								{
-									string record = "=\"" + cmnd + "\"" + "," + name + "," + "Không tìm thấy";
+									res = "Không tìm thấy";
+									string record = "=\"" + cmnd + "\"" + "," + name + "," + res;
 									results.SetValue(record, i++);
-									this.Dispatcher.Invoke(() =>
+									Dispatcher.Invoke(() =>
 									{
-										((Record)records[i - 1]).Result1 = "Không tìm thấy hoặc có lỗi xảy ra";
+										((Record)records[i - 1]).Result1 = res;
 									});
-									// Console.WriteLine(e1);
 									driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div[3]/div[2]/button[2]")).Click(); // lam moi
-									Thread.Sleep(4000);
+									Thread.Sleep(2000);
 									if (File.Exists("temp123.txt"))
 										File.Delete("temp123.txt");
 									File.WriteAllLines("temp123.txt", results, Encoding.UTF8);
@@ -414,14 +431,45 @@ namespace ShbChecker
 						} while (reader.NextResult());
 					}
 				}
-				File.WriteAllLines("KETQUA.CSV", results, Encoding.UTF8);
-				driver.Close();
-				MessageBox.Show("ĐÃ HOÀN THÀNH!\nKẾT QUẢ ĐƯỢC LƯU TRONG FILE KETQUA.CSV", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 
-				var chromeDriverProcesses = Process.GetProcesses().Where(pr => pr.ProcessName == "chromedriver"); // without '.exe'
-				foreach (var process in chromeDriverProcesses) process.Kill();
+				File.WriteAllLines("KETQUA.CSV", results, Encoding.UTF8);
+				closeBrowser();
+				MessageBox.Show("ĐÃ HOÀN THÀNH!\nKẾT QUẢ ĐƯỢC LƯU TRONG FILE KETQUA.CSV", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
 			}
-			catch (Exception wtf) { }
+			catch (Exception wtf)
+			{
+			}
+		}
+
+		public Func<IWebDriver, IWebElement> AnyElementExists(By[] locators)
+		{
+			return (driver) =>
+			{
+				int cntSleep = 0;
+				while (cntSleep++ <= 2400) // <=> 60s
+				{
+					IReadOnlyCollection<IWebElement> listElement0 = driver.FindElements(locators[0]); //err
+					IReadOnlyCollection<IWebElement> listElement1 = driver.FindElements(locators[1]); //s37link
+																									  //MessageBox.Show(listElement0.Count.ToString());
+					if (listElement0.Count == 1)
+					{
+						return listElement0.ElementAt(0);
+					}
+					if (listElement1.Count > 1)
+					{
+						foreach (var e in listElement1)
+						{
+							if (e.Text.Contains("S37"))
+							{
+								return e;
+							}
+						}
+					}
+					Thread.Sleep(25);
+				}
+
+				return null;
+			};
 		}
 
 		public void closeBrowser()
@@ -443,7 +491,7 @@ namespace ShbChecker
 			}
 			base.OnClosing(e);
 		}
-		
+
 	}
 
 	public class User
