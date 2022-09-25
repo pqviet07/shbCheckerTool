@@ -1,49 +1,15 @@
-﻿<Window x:Class="ShbChecker.MainWindow"
+﻿<Window x:Class="processing.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:processing"
         mc:Ignorable="d"
-        Title="ShbChecker-Version1.0.0     email:fungviet@gmail.com" Height="400" Width="600">
+        Title="MainWindow" Height="450" Width="800">
     <Grid Width="{Binding ActualWidth, 
         RelativeSource = {RelativeSource AncestorType = {x:Type Window}}}" 
         Height="{Binding ActualHeight, 
         RelativeSource ={RelativeSource AncestorType = {x:Type Window}}}">
-        <Grid Name="loginUI" Margin="0,0,10,0" MinHeight="300" MinWidth="700" HorizontalAlignment="Center" VerticalAlignment="Center" Height="369" Width="782">
-            <Grid.Background>
-                <ImageBrush ImageSource="imageedit_1_3248397475.png" Stretch="UniformToFill"/>
-            </Grid.Background>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="252*" />
-                <!--   <RowDefinition Height="12*" />-->
-            </Grid.RowDefinitions>
-            <TextBlock Height="25" Foreground="DarkBlue" FontWeight="Medium" HorizontalAlignment="Left" Margin="220,171,0,0" Name="textBlockUsername" Text="Username:" VerticalAlignment="Top" Width="60" RenderTransformOrigin="1.008,0.587" />
-            <TextBlock Height="25" Foreground="DarkBlue"  FontWeight="Medium" HorizontalAlignment="Left" Margin="220,202,0,0" Name="textBlockPassword" Text="Password:" VerticalAlignment="Top" Width="60" RenderTransformOrigin="0.895,0.391"  />
-            <TextBox Height="25" VerticalContentAlignment="Center" HorizontalAlignment="Right" Margin="0,170,260,0" Name="textBoxUsername" VerticalAlignment="Top" Width="222" >
-                <TextBox.Style>
-                    <Style TargetType="{x:Type TextBox}">
-                        <Style.Triggers>
-                            <Trigger Property="IsFocused" Value="true">
-                                <Setter Property="Background" Value="LightGray" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
-            <PasswordBox Height="25"  VerticalContentAlignment="Center" HorizontalAlignment="Right" Margin="0,200,260,0" Name="textBoxPassword" VerticalAlignment="Top" Width="222" >
-                <PasswordBox.Style>
-                    <Style TargetType="{x:Type PasswordBox}">
-                        <Style.Triggers>
-                            <Trigger Property="IsFocused" Value="true">
-                                <Setter Property="Background" Value="LightGray" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </PasswordBox.Style>
-            </PasswordBox>
-            <!--For password-->
-            <Button Content="Login" Background="RoyalBlue"  Foreground="White"  FontWeight="DemiBold" Height="27" HorizontalAlignment="Right" Margin="0,239,260,0" Name="Submit" VerticalAlignment="Top" Width="70" Click="Login_Click" RenderTransformOrigin="2.607,2.217" />
-        </Grid>
 
         <Grid Name="cicUI" Visibility="Hidden" Background="White">
 

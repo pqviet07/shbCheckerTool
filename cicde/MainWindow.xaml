@@ -1,0 +1,23 @@
+﻿<Window x:Class="cicde.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:cicde"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid Width="{Binding ActualWidth, 
+        RelativeSource = {RelativeSource AncestorType = {x:Type Window}}}" 
+        Height="{Binding ActualHeight, 
+        RelativeSource ={RelativeSource AncestorType = {x:Type Window}}}">
+
+        <Grid Name="cicUI" Visibility="Visible" Background="White">
+
+            <Button Height="28" HorizontalAlignment="Left" Margin="400,20,0,0" Content="Decrypt (from txt to xlsx)" Background="Green"  Foreground="White" Name="button2" VerticalAlignment="Top" Width="142" Click="Start_Click" />
+            <Button Height="28" HorizontalAlignment="Left" Margin="300,20,0,0" Content="Import Excel" Background="Green"  Foreground="White"  Name="button3" VerticalAlignment="Top" Width="80" Click="ImportExcel_Click" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,50,0,0" Text="Selected file:" VerticalAlignment="Top" Width="90" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="500,50,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="excelPath"/>
+        </Grid>
+
+    </Grid>
+</Window>
