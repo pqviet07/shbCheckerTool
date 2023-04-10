@@ -1,0 +1,31 @@
+﻿<Window x:Class="cicen.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:cicen"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="1200">
+    <Grid Width="{Binding ActualWidth, 
+        RelativeSource = {RelativeSource AncestorType = {x:Type Window}}}" 
+        Height="{Binding ActualHeight, 
+        RelativeSource ={RelativeSource AncestorType = {x:Type Window}}}">
+
+        <Grid Name="cicUI" Visibility="Visible" Background="White">
+
+            <Button Height="28" HorizontalAlignment="Left" Margin="400,20,0,0" Content="Encrypt (from zip to txt)" Background="Green"  Foreground="White" Name="button2" VerticalAlignment="Top" Width="138" Click="Encrypt_Click" />
+            <Button Height="28" HorizontalAlignment="Left" Margin="300,20,0,0" Content="Import File" Background="Green"  Foreground="White"  Name="button3" VerticalAlignment="Top" Width="80" Click="ImportExcel_Click" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,50,0,0" Text="Selected file:" VerticalAlignment="Top" Width="90" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="500,50,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="excelPath"/>
+            <Button Height="28" HorizontalAlignment="Left" Margin="565,20,0,0" Content="Get Hash (from exe)" Background="Green"  Foreground="White" x:Name="button4" VerticalAlignment="Top" Width="124" Click="GetHash_Click" />
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,85,0,0" Text="Hash string:" VerticalAlignment="Top" Width="90" />
+            <TextBox Height="18" HorizontalAlignment="Left" Margin="500,85,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="hashString"/>
+            <TextBlock Height="18" HorizontalAlignment="Left" Margin="300,115,0,0" Text="En/decrypt string:" VerticalAlignment="Top" Width="90" />
+            <TextBox Height="18" HorizontalAlignment="Left" Margin="500,115,0,0" Text="" VerticalAlignment="Top" Width="650" x:Name="endecryptString"/>
+            <Button Height="28" HorizontalAlignment="Left" Margin="300,154,0,0" Content="Encrypt string" Background="Green"  Foreground="White"  x:Name="button3_Copy" VerticalAlignment="Top" Width="90" Click="EncryptString_Click" />
+            <Button Height="28" HorizontalAlignment="Left" Margin="432,154,0,0" Content="Decrypt string" Background="Green"  Foreground="White"  x:Name="button3_Copy1" VerticalAlignment="Top" Width="90" Click="DecryptString_Click" />
+
+        </Grid>
+
+    </Grid>
+</Window>
